@@ -29,28 +29,35 @@ body {
 }
 </style>
 <body>
-<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/d3.v3.js"></script>
 
 <script>
 var margin = {top: 20, right: 20, bottom: 30, left: 40},
     width = 960 - margin.left - margin.right,
     height = 500 - margin.top - margin.bottom;
 
-/* 
+/*
  * value accessor - returns the value to encode for a given data object.
  * scale - maps value to a visual display encoding, such as a pixel position.
  * map function - maps from data value to display value
  * axis - sets up axis
- */ 
+ */
 
-// setup x 
-var xValue = function(d) { return d.Calories;}, // data -> value
+// name for the x axis data, must match csv file header
+var xname = "X";
+// name for the y axis data, must match csv file header
+var yname = "-Z";
+// how close can data be plotted to axis
+var data_margin = 20;
+
+// setup x
+var xValue = function(d) { return d[xname];}, // data -> value
     xScale = d3.scale.linear().range([0, width]), // value -> display
     xMap = function(d) { return xScale(xValue(d));}, // data -> display
     xAxis = d3.svg.axis().scale(xScale).orient("bottom");
 
 // setup y
-var yValue = function(d) { return d["Protein (g)"];}, // data -> value
+var yValue = function(d) { return d[yname];}, // data -> value
     yScale = d3.scale.linear().range([height, 0]), // value -> display
     yMap = function(d) { return yScale(yValue(d));}, // data -> display
     yAxis = d3.svg.axis().scale(yScale).orient("left");
@@ -76,13 +83,11 @@ d3.csv("cereal.csv", function(error, data) {
 
   // change string (from CSV) into number format
   data.forEach(function(d) {
-    d.Calories = +d.Calories;
-    d["Protein (g)"] = +d["Protein (g)"];
-//    console.log(d);
+    d[xname] = +d[xname];
+    d[yname] = +d[yname];
   });
 
   // don't want dots overlapping axis, so add in buffer to data domain
-  var data_margin = 10;
   xScale.domain([d3.min(data, xValue)-data_margin, d3.max(data, xValue)+data_margin]);
   yScale.domain([d3.min(data, yValue)-data_margin, d3.max(data, yValue)+data_margin]);
 
@@ -96,7 +101,7 @@ d3.csv("cereal.csv", function(error, data) {
       .attr("x", width)
       .attr("y", -6)
       .style("text-anchor", "end")
-      .text("Calories");
+      .text(xname);
 
   // y-axis
   svg.append("g")
@@ -108,7 +113,7 @@ d3.csv("cereal.csv", function(error, data) {
       .attr("y", 6)
       .attr("dy", ".71em")
       .style("text-anchor", "end")
-      .text("Protein (g)");
+      .text(yname);
 
   // draw dots
   svg.selectAll(".dot")
@@ -118,12 +123,12 @@ d3.csv("cereal.csv", function(error, data) {
       .attr("r", 3.5)
       .attr("cx", xMap)
       .attr("cy", yMap)
-      .style("fill", function(d) { return color(cValue(d));}) 
+      .style("fill", function(d) { return color(cValue(d));})
       .on("mouseover", function(d) {
           tooltip.transition()
                .duration(200)
                .style("opacity", .9);
-          tooltip.html(d["Cereal Name"] + "<br/> (" + xValue(d) 
+          tooltip.html(d["Cereal Name"] + "<br/> (" + xValue(d)
 	        + ", " + yValue(d) + ")")
                .style("left", (d3.event.pageX + 5) + "px")
                .style("top", (d3.event.pageY - 28) + "px");
