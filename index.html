@@ -21,6 +21,11 @@ body {
   stroke: #000;
 }*/
 
+.link {
+	fill: transparent;
+	stroke: black;
+}
+
 .tooltip {
   position: absolute;
   width: 200px;
@@ -148,7 +153,8 @@ var data = {
     {
       s: "CS",
       t: "BEL"
-    },{
+    }
+    ,{
       s: "CS",
       t: "ECM"
     },{
@@ -227,20 +233,58 @@ var dots = svg.selectAll(".dot")
           // .style("font-family","Arial, Helvetica")
           .text(function (d){ return d[hovername];/*d.label? d.label.join(", ") : "";*/ });
 
-for (var i = 0; i < data.edges.length; i++) {
-  var e = data.edges[i];
-  var src = _.find(data.nodes, {id: e.s});
-  var tar = _.find(data.nodes, {id: e.t});
+// for (var i = 0; i < data.edges.length; i++) {
+//   var e = data.edges[i];
+//   var src = _.find(data.nodes, {id: e.s});
+//   var tar = _.find(data.nodes, {id: e.t});
+//   console.log(e);
+//   console.log();
+//   console.log();
+//   svg.append('line')
+//     .style("stroke", "black")  // colour the line
+//     .attr("x1", xScale(src[xname]))	// x position of the first end of the line
+//     .attr("y1", yScale(src[yname]))	// y position of the first end of the line
+//     .attr("x2", xScale(tar[xname]))	// x position of the second end of the line
+//     .attr("y2", yScale(tar[yname]));	// y position of the second end of the line
+// };
+
+// data.e2 = [];
+
+// for (var i = 0; i < data.edges.length; i++) {
+// 	var e = data.edges[i];
+
+// };
+
+function elbow(d, i) {
+  var src = _.find(data.nodes, {id: d.s});
+  var tar = _.find(data.nodes, {id: d.t});
+  var e = {
+  	source: {
+  		x:xScale(src[xname]),
+  		y:yScale(src[yname])
+  	},target: {
+  		x:xScale(tar[xname]),
+  		y:yScale(tar[yname]+5-src[yname])
+  	}
+  };
   console.log(e);
-  console.log();
-  console.log();
-  svg.append('line')
-    .style("stroke", "black")  // colour the line
-    .attr("x1", xScale(src[xname]))	// x position of the first end of the line
-    .attr("y1", yScale(src[yname]))	// y position of the first end of the line
-    .attr("x2", xScale(tar[xname]))	// x position of the second end of the line
-    .attr("y2", yScale(tar[yname]));	// y position of the second end of the line
-};
+  //https://www.dashingd3js.com/svg-paths-and-d3js
+  return "M " + e.source.x + " , " + e.source.y
+      + " V " + e.target.y + " H " + e.target.x;
+}
+
+var diagonal = d3.svg.diagonal()
+    .projection(function(d) {
+    	console.log(d);
+    	return [d.y, d.x];
+    });//flip it onto its side!
+
+
+  var link = svg.selectAll("path.link")
+      .data(data.edges)
+    	.enter().append("path")
+      .attr("class", "link")
+      .attr("d", elbow);
 
 // var lineGen = d3.svg.line()
 //   .x(function(d) {
