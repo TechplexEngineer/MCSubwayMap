@@ -147,7 +147,28 @@ var data = {
       "Name":"Central Station",
       "X":84,
       "-Z":7
+    },{
+      id:"TVS",
+      "Name":"The Village",
+      "X":323,
+      "-Z":241
+    },{
+      id:"CAS",
+      "Name":"Castle Station",
+      "X":-28,
+      "-Z":268
+    },{
+      id:"IGC",
+      "Name":"Igloo Cliff",
+      "X":458,
+      "-Z":404
     }
+    // ,{
+    //   id:"MTN",
+    //   "Name":"Mountain Station",
+    //   "X":105,
+    //   "-Z":1562
+    // }
   ],
   edges: [
     {
@@ -264,13 +285,13 @@ function elbow(d, i) {
   		y:yScale(src[yname])
   	},target: {
   		x:xScale(tar[xname]),
-  		y:yScale(tar[yname]+5-src[yname])
+  		y:yScale(tar[yname])
   	}
   };
   console.log(e);
   //https://www.dashingd3js.com/svg-paths-and-d3js
   return "M " + e.source.x + " , " + e.source.y
-      + " V " + e.target.y + " H " + e.target.x;
+      + " L " + e.target.x + " , " + e.target.y;
 }
 
 var diagonal = d3.svg.diagonal()
