@@ -17,9 +17,9 @@ body {
   shape-rendering: crispEdges;
 }
 
-.dot {
+/*.dot {
   stroke: #000;
-}
+}*/
 
 .tooltip {
   position: absolute;
@@ -29,6 +29,7 @@ body {
 }
 </style>
 <body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.0.0/lodash.min.js"></script>
 <script src="http://d3js.org/d3.v3.js"></script>
 
 <script>
@@ -48,13 +49,23 @@ var xname = "X";
 // name for the y axis data, must match csv file header
 var yname = "-Z";
 // how close can data be plotted to axis
-var data_margin = 20;
+var data_margin = 30;
+// the name of the attribute to show in the hover text
+var hovername = "Name"
 
 // setup x
-var xValue = function(d) { return d[xname];}, // data -> value
-    xScale = d3.scale.linear().range([0, width]), // value -> display
-    xMap = function(d) { return xScale(xValue(d));}, // data -> display
-    xAxis = d3.svg.axis().scale(xScale).orient("bottom");
+// data -> value
+var xValue = function(d) {
+  return d[xname];
+};
+// value -> display
+var xScale = d3.scale.linear().range([0, width]);
+// data -> display
+var xMap = function(d) {
+  var a = xScale(xValue(d));
+  return xScale(xValue(d));
+};
+var xAxis = d3.svg.axis().scale(xScale).orient("bottom");
 
 // setup y
 var yValue = function(d) { return d[yname];}, // data -> value
@@ -63,7 +74,7 @@ var yValue = function(d) { return d[yname];}, // data -> value
     yAxis = d3.svg.axis().scale(yScale).orient("left");
 
 // setup fill color
-var cValue = function(d) { return d.Manufacturer;},
+var cValue = function(d) { return d.Manufacturer;}, //@todo
     color = d3.scale.category10();
 
 // add the graph canvas to the body of the webpage
@@ -78,55 +89,59 @@ var tooltip = d3.select("body").append("div")
     .attr("class", "tooltip")
     .style("opacity", 0);
 
+// d3.csv("cereal.csv", function(error, data) {
+//   console.log(data);
+// });
+
 // load data
 
 var data = {
   nodes: [
     {
       id:"BEL",
-      name:"Belacydoc",
-      x:404,
-      z:-240
+      "Name":"Belacydoc",
+      "X":404,
+      "-Z":-240
     },{
       id:"ECM",
-      name:"ECM School",
-      x:183,
-      z:-66
+      "Name":"ECM School",
+      "X":183,
+      "-Z":-66
     },{
       id:"NEND",
-      name:"North End",
-      x:101,
-      z:238
+      "Name":"North End",
+      "X":101,
+      "-Z":238
     },{
       id:"OTS",
-      name:"Owl Town",
-      x:232,
-      z:-4
+      "Name":"Owl Town",
+      "X":232,
+      "-Z":-4
     },{
       id:"RWS",
-      name:"Redstone World",
-      x:37,
-      z:-49
+      "Name":"Redstone World",
+      "X":37,
+      "-Z":-49
     },{
       id:"OSPN",
-      name:"Old Spawn",
-      x:-39,
-      z:-242
+      "Name":"Old Spawn",
+      "X":-39,
+      "-Z":-242
     },{
       id:"MAL",
-      name:"Mainelandia",
-      x:-181,
-      z:27
+      "Name":"Mainelandia",
+      "X":-181,
+      "-Z":27
     },{
       id:"OWS",
-      name:"Outerworks",
-      x:144,
-      z:336
+      "Name":"Outerworks",
+      "X":144,
+      "-Z":336
     },{
       id:"CS",
-      name:"Central Station",
-      x:84,
-      z:7
+      "Name":"Central Station",
+      "X":84,
+      "-Z":7
     }
   ],
   edges: [
@@ -159,14 +174,14 @@ var data = {
 };
 
 // change string (from CSV) into number format
-data.forEach(function(d) {
-  d[xname] = +d[xname];
-  d[yname] = +d[yname];
-});
+// data.forEach(function(d) {
+//   d[xname] = +d[xname];
+//   d[yname] = +d[yname];
+// });
 
 // don't want dots overlapping axis, so add in buffer to data domain
-xScale.domain([d3.min(data, xValue)-data_margin, d3.max(data, xValue)+data_margin]);
-yScale.domain([d3.min(data, yValue)-data_margin, d3.max(data, yValue)+data_margin]);
+xScale.domain([d3.min(data.nodes, xValue)-data_margin, d3.max(data.nodes, xValue)+data_margin]);
+yScale.domain([d3.min(data.nodes, yValue)-data_margin, d3.max(data.nodes, yValue)+data_margin]);
 
 // x-axis
 svg.append("g")
@@ -193,28 +208,70 @@ svg.append("g")
     .text(yname);
 
 // draw dots
-svg.selectAll(".dot")
-    .data(data)
-  .enter().append("circle")
-    .attr("class", "dot")
+var dots = svg.selectAll(".dot")
+    .data(data.nodes)
+  .enter().append("g")
+    .attr("class", "dot");
+
+    dots.append('circle')
     .attr("r", 3.5)
     .attr("cx", xMap)
     .attr("cy", yMap)
-    .style("fill", function(d) { return color(cValue(d));})
-    .on("mouseover", function(d) {
-        tooltip.transition()
-             .duration(200)
-             .style("opacity", .9);
-        tooltip.html(d["Cereal Name"] + "<br/> (" + xValue(d)
-        + ", " + yValue(d) + ")")
-             .style("left", (d3.event.pageX + 5) + "px")
-             .style("top", (d3.event.pageY - 28) + "px");
-    })
-    .on("mouseout", function(d) {
-        tooltip.transition()
-             .duration(500)
-             .style("opacity", 0);
-    });
+    .style("fill", function(d) { return color(cValue(d));});
+
+    dots.append("text")
+          .attr("transform", function(d) { return "translate(" + xScale(d[xname]) + "," + yScale(d[yname]) + ")"; })
+          .attr("text-anchor", "middle")
+          .style("font-size","10px")
+          .attr("dy", 15)
+          // .style("font-family","Arial, Helvetica")
+          .text(function (d){ return d[hovername];/*d.label? d.label.join(", ") : "";*/ });
+
+for (var i = 0; i < data.edges.length; i++) {
+  var e = data.edges[i];
+  var src = _.find(data.nodes, {id: e.s});
+  var tar = _.find(data.nodes, {id: e.t});
+  console.log(e);
+  console.log();
+  console.log();
+  svg.append('line')
+    .style("stroke", "black")  // colour the line
+    .attr("x1", xScale(src[xname]))	// x position of the first end of the line
+    .attr("y1", yScale(src[yname]))	// y position of the first end of the line
+    .attr("x2", xScale(tar[xname]))	// x position of the second end of the line
+    .attr("y2", yScale(tar[yname]));	// y position of the second end of the line
+};
+
+// var lineGen = d3.svg.line()
+//   .x(function(d) {
+//     return xScale(d.year);
+//   })
+//   .y(function(d) {
+//     return yScale(d.sale);
+//   })
+//   .interpolate("basis");
+
+// svg.append('line')
+//   .attr('d', lineGen(data.edges))
+//   .attr('stroke', 'blue')
+//   .attr('stroke-width', 2)
+//   .attr('fill', 'none');
+
+
+    // .on("mouseover", function(d) {
+    //     tooltip.transition()
+    //          .duration(200)
+    //          .style("opacity", .9);
+    //     tooltip.html(d[hovername] + "<br/> (" + xValue(d)
+    //     + ", " + yValue(d) + ")")
+    //          .style("left", (d3.event.pageX + 5) + "px")
+    //          .style("top", (d3.event.pageY - 28) + "px");
+    // })
+    // .on("mouseout", function(d) {
+    //     tooltip.transition()
+    //          .duration(500)
+    //          .style("opacity", 0);
+    // });
 
 // draw legend
 var legend = svg.selectAll(".legend")
