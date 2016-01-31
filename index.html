@@ -23,14 +23,19 @@ body {
 
 .link {
 	fill: transparent;
-	stroke: black;
+	stroke: #ccc;
 }
 
 .tooltip {
   position: absolute;
-  width: 200px;
-  height: 28px;
+  /*width: 200px;*/
+  /*height: 28px;*/
   pointer-events: none;
+  background-color: white;
+  border-radius: 5px;
+  border: 1px solid grey;
+  padding: 6px;
+  white-space: nowrap;
 }
 </style>
 <body>
@@ -54,7 +59,7 @@ var xname = "X";
 // name for the y axis data, must match csv file header
 var yname = "-Z";
 // how close can data be plotted to axis
-var data_margin = 30;
+var data_margin = 110;
 // the name of the attribute to show in the hover text
 var hovername = "Name"
 
@@ -133,10 +138,10 @@ var data = {
       "X":-39,
       "-Z":-242
     },{
-      id:"MAL",
-      "Name":"Mainelandia",
-      "X":-181,
-      "-Z":27
+      id:"MLJ",
+      "Name":"Mainelandia Junction",
+      "X":-219,
+      "-Z":14
     },{
       id:"OWS",
       "Name":"Outerworks",
@@ -168,49 +173,86 @@ var data = {
       "Name":"Mountain Station",
       "X":105,
       "-Z":1562
+    },
+    {
+      id:"WVS",
+      "Name":"West View Station",
+      "X":-489,
+      "-Z":-683
     }
+
   ],
   edges: [
     {
       s: "CS",
-      t: "BEL"
-    }
-    ,{
-      s: "CS",
-      t: "ECM"
+      t: "BEL",
+      time: "1:20",
+      color: "black"
     },{
       s: "CS",
-      t: "NEND"
+      t: "ECM",
+      time: "0:25",
+      color: "brown"
     },{
       s: "CS",
-      t: "OTS"
+      t: "NEND",
+      time: "0:30",
+      color: "orange"
     },{
       s: "CS",
-      t: "RWS"
+      t: "OTS",
+      time: "0:30",
+      color: ""
     },{
       s: "CS",
-      t: "OSPN"
+      t: "RWS",
+      time: "0:15",
+      color: "green"
     },{
       s: "CS",
-      t: "MAL"
+      t: "OSPN",
+      time: "1:00",
+      color: "yellow"
     },{
       s: "CS",
-      t: "OWS"
+      t: "MLJ",
+      time: "0:40",
+      color: "blue"
+    },{
+      s: "CS",
+      t: "OWS",
+      time: "0:50",
+      color: "purple"
     },{
       s: "NEND",
-      t: "TVS"
+      t: "TVS",
+      time: "0:30",
+      color: ""
     },{
       s: "OWS",
-      t: "TVS"
+      t: "TVS",
+      time: "0:35",
+      color: "orange"
     },{
       s: "OWS",
-      t: "CAS"
+      t: "CAS",
+      time: "0:30",
+      color: "red"
     },{
       s: "IGC",
-      t: "OWS"
+      t: "OWS",
+      time: "0:50",
+      color: "green"
     },{
       s: "MTN",
-      t: "OWS"
+      t: "OWS",
+      time: "2:30",
+      color: "yellow"
+    },{
+      s: "MLJ",
+      t: "WVS",
+      time: "2:00",
+      color: ""
     }
   ]
 };
@@ -249,6 +291,60 @@ svg.append("g")
     .style("text-anchor", "end")
     .text(yname);
 
+
+// draw connectors
+
+function elbow(d, i) {
+  var src = _.find(data.nodes, {id: d.s});
+  var tar = _.find(data.nodes, {id: d.t});
+  if (!src) {
+    throw "Invalid Source "+d.s;
+  }
+  if (!tar) {
+    throw "Invalid Target "+d.t;
+  }
+  var e = {
+    source: {
+      x:xScale(src[xname]),
+      y:yScale(src[yname])
+    },target: {
+      x:xScale(tar[xname]),
+      y:yScale(tar[yname])
+    }
+  };
+  //https://www.dashingd3js.com/svg-paths-and-d3js
+  return "M " + e.source.x + " , " + e.source.y
+      + " L " + e.target.x + " , " + e.target.y;
+}
+
+// var diagonal = d3.svg.diagonal()
+//     .projection(function(d) {
+//       console.log(d);
+//       return [d.y, d.x];
+//     });//flip it onto its side!
+
+
+  var links = svg.selectAll("path.link")
+      .data(data.edges)
+      .enter().append("path")
+      .attr("class", "link")
+      .attr("d", elbow);
+
+links.on("mouseover", function(d) {
+        tooltip.transition()
+             .duration(200)
+             .style("opacity", .9);
+        tooltip.html('Travel time '+d['time']+'<br/>'+d['s']+' => '+d['t'])
+             .style("left", (d3.event.pageX + 5) + "px")
+             .style("top", (d3.event.pageY - 28) + "px");
+    })
+    .on("mouseout", function(d) {
+        tooltip.transition()
+            .delay(375)
+            .duration(500)
+            .style("opacity", 0);
+    });
+
 // draw dots
 var dots = svg.selectAll(".dot")
     .data(data.nodes)
@@ -260,6 +356,22 @@ var dots = svg.selectAll(".dot")
     .attr("cx", xMap)
     .attr("cy", yMap)
     .style("fill", function(d) { return color(cValue(d));});
+
+    dots.on("mouseover", function(d) {
+        tooltip.transition()
+             .duration(200)
+             .style("opacity", .9);
+        tooltip.html(d[hovername] + "<br/> (" + xValue(d)
+        + ", " + yValue(d) + ")")
+             .style("left", (d3.event.pageX + 5) + "px")
+             .style("top", (d3.event.pageY - 28) + "px");
+    })
+    .on("mouseout", function(d) {
+        tooltip.transition()
+            .delay(375)
+            .duration(500)
+            .style("opacity", 0);
+    });
 
     dots.append("text")
           .attr("transform", function(d) { return "translate(" + xScale(d[xname]) + "," + yScale(d[yname]) + ")"; })
@@ -291,36 +403,7 @@ var dots = svg.selectAll(".dot")
 
 // };
 
-function elbow(d, i) {
-  var src = _.find(data.nodes, {id: d.s});
-  var tar = _.find(data.nodes, {id: d.t});
-  var e = {
-  	source: {
-  		x:xScale(src[xname]),
-  		y:yScale(src[yname])
-  	},target: {
-  		x:xScale(tar[xname]),
-  		y:yScale(tar[yname])
-  	}
-  };
-  console.log(e);
-  //https://www.dashingd3js.com/svg-paths-and-d3js
-  return "M " + e.source.x + " , " + e.source.y
-      + " L " + e.target.x + " , " + e.target.y;
-}
 
-var diagonal = d3.svg.diagonal()
-    .projection(function(d) {
-    	console.log(d);
-    	return [d.y, d.x];
-    });//flip it onto its side!
-
-
-  var link = svg.selectAll("path.link")
-      .data(data.edges)
-    	.enter().append("path")
-      .attr("class", "link")
-      .attr("d", elbow);
 
 // var lineGen = d3.svg.line()
 //   .x(function(d) {
@@ -337,43 +420,27 @@ var diagonal = d3.svg.diagonal()
 //   .attr('stroke-width', 2)
 //   .attr('fill', 'none');
 
+// // draw legend
+// var legend = svg.selectAll(".legend")
+//     .data(color.domain())
+//    .enter().append("g")
+//     .attr("class", "legend")
+//     .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
 
-    // .on("mouseover", function(d) {
-    //     tooltip.transition()
-    //          .duration(200)
-    //          .style("opacity", .9);
-    //     tooltip.html(d[hovername] + "<br/> (" + xValue(d)
-    //     + ", " + yValue(d) + ")")
-    //          .style("left", (d3.event.pageX + 5) + "px")
-    //          .style("top", (d3.event.pageY - 28) + "px");
-    // })
-    // .on("mouseout", function(d) {
-    //     tooltip.transition()
-    //          .duration(500)
-    //          .style("opacity", 0);
-    // });
+// // draw legend colored rectangles
+// legend.append("rect")
+//     .attr("x", width - 18)
+//     .attr("width", 18)
+//     .attr("height", 18)
+//     .style("fill", color);
 
-// draw legend
-var legend = svg.selectAll(".legend")
-    .data(color.domain())
-   .enter().append("g")
-    .attr("class", "legend")
-    .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
-
-// draw legend colored rectangles
-legend.append("rect")
-    .attr("x", width - 18)
-    .attr("width", 18)
-    .attr("height", 18)
-    .style("fill", color);
-
-// draw legend text
-legend.append("text")
-    .attr("x", width - 24)
-    .attr("y", 9)
-    .attr("dy", ".35em")
-    .style("text-anchor", "end")
-    .text(function(d) { return d;})
+// // draw legend text
+// legend.append("text")
+//     .attr("x", width - 24)
+//     .attr("y", 9)
+//     .attr("dy", ".35em")
+//     .style("text-anchor", "end")
+//     .text(function(d) { return d;})
 
 
 </script>
