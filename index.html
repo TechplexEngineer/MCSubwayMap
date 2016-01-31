@@ -2,6 +2,8 @@
 <html>
 <meta charset="utf-8">
 
+<title>East Coast Miners Minecart Map</title>
+
 <!-- Example based on http://bl.ocks.org/mbostock/3887118 -->
 <!-- Tooltip example from http://www.d3noob.org/2013/01/adding-tooltips-to-d3js-graph.html -->
 
@@ -25,6 +27,10 @@ body {
 	fill: transparent;
 	stroke: #ccc;
 }
+.link:hover {
+  stroke: red;
+  stroke-width: 2px
+}
 
 .tooltip {
   position: absolute;
@@ -36,6 +42,16 @@ body {
   border: 1px solid grey;
   padding: 6px;
   white-space: nowrap;
+}
+
+.crtrans {
+  fill-opacity:0;
+  stroke:black;
+  stroke-width: 2px;
+}
+
+body {
+  background-color: #868686;
 }
 </style>
 <body>
@@ -84,8 +100,8 @@ var yValue = function(d) { return d[yname];}, // data -> value
     yAxis = d3.svg.axis().scale(yScale).orient("left");
 
 // setup fill color
-var cValue = function(d) { return d.Manufacturer;}, //@todo
-    color = d3.scale.category10();
+// var cValue = function(d) { return d.Manufacturer;}, //@todo
+//     color = d3.scale.category10();
 
 // add the graph canvas to the body of the webpage
 var svg = d3.select("body").append("svg")
@@ -227,7 +243,7 @@ var data = {
       s: "NEND",
       t: "TVS",
       time: "0:30",
-      color: ""
+      color: "orange"
     },{
       s: "OWS",
       t: "TVS",
@@ -252,7 +268,7 @@ var data = {
       s: "MLJ",
       t: "WVS",
       time: "2:00",
-      color: ""
+      color: "blue"
     }
   ]
 };
@@ -328,13 +344,28 @@ function elbow(d, i) {
       .data(data.edges)
       .enter().append("path")
       .attr("class", "link")
+      .attr("style", function(d) {
+        if (d['color']) {
+          return 'stroke:'+d['color'];
+        }
+        return "";
+      })
       .attr("d", elbow);
+
+function capFirst(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
 
 links.on("mouseover", function(d) {
         tooltip.transition()
              .duration(200)
              .style("opacity", .9);
-        tooltip.html('Travel time '+d['time']+'<br/>'+d['s']+' => '+d['t'])
+        var tt = 'Travel time '+d['time']+'<br/>';
+        tt += d['s']+' => '+d['t']+'<br/>';
+        if (d['color']) {
+          tt += capFirst(d['color'])+' Line';
+        }
+        tooltip.html(tt)
              .style("left", (d3.event.pageX + 5) + "px")
              .style("top", (d3.event.pageY - 28) + "px");
     })
@@ -355,7 +386,8 @@ var dots = svg.selectAll(".dot")
     .attr("r", 3.5)
     .attr("cx", xMap)
     .attr("cy", yMap)
-    .style("fill", function(d) { return color(cValue(d));});
+    .style('fill', 'rgb(31, 119, 180)'); //the color of the station point
+
 
     dots.on("mouseover", function(d) {
         tooltip.transition()
@@ -420,7 +452,34 @@ var dots = svg.selectAll(".dot")
 //   .attr('stroke-width', 2)
 //   .attr('fill', 'none');
 
-// // draw legend
+var legend = svg.append('g').attr('transform','scale(.125)');
+
+var west = legend.append('g');
+west.append('path').attr('d', 'M330.7 304.7L363.6 337.5 363.6 337.5 120.7 337.5 330.7 304.7').attr('class','crtrans');
+west.append('path').attr('d', 'M330.7 371.3L363.6 338.5 363.6 338.5 120.7 338.5 330.7 371.3');
+
+var east = legend.append('g');
+east.append('path').attr('d', 'M397.4 371.3L364.6 338.5 364.6 338.5 607.4 338.5 397.4 371.3').attr('class','crtrans');
+east.append('path').attr('d', 'M397.4 304.7L364.6 337.5 364.6 337.5 607.4 337.5 397.4 304.7');
+
+var south = legend.append('g');
+south.append('path').attr('d', 'M330.7 371.3L363.6 338.5 363.6 338.5 363.6 581.4 330.7 371.3').attr('class','crtrans');
+south.append('path').attr('d', 'M397.4 371.3L364.6 338.5 364.6 338.5 364.6 581.4 397.4 371.3');
+
+var north = legend.append('g');
+north.append('path').attr('d', 'M397.4 304.7L364.6 337.5 364.6 337.5 364.6 94.6 397.4 304.7').attr('class','crtrans');
+north.append('path').attr('d', 'M330.7 304.7L363.6 337.5 363.6 337.5 363.6 94.6 330.7 304.7');
+north.append("text")
+    .attr("transform", function(d) { return "translate(" + xScale(-130) + "," + yScale(1900) + ") scale(8)"; })
+    .attr("text-anchor", "middle")
+    .style("font-size","15px")
+    .attr("dy", 15)
+    // .style("font-family","Arial, Helvetica")
+    .text(function (d){ return "N"});
+
+
+
+// draw legend
 // var legend = svg.selectAll(".legend")
 //     .data(color.domain())
 //    .enter().append("g")
@@ -444,5 +503,6 @@ var dots = svg.selectAll(".dot")
 
 
 </script>
+<!-- <img src="cr.svg" alt=""> -->
 </body>
 </html>
